@@ -15,7 +15,12 @@ All notable changes to this project will be documented in this file.
 - **New Gemini Service Method**: Added `analyze_calendar_event()` for calendar-specific text analysis
 - **Enhanced Data Models**: Added `CalendarEventData` and `CalendarAnalysisResult` classes
 - **Improved Error Handling**: Better user feedback when date/time extraction fails
-- **Comprehensive Testing**: Added unit tests for calendar analysis functionality
+- **Telegram Message Escaping**: Added `_escape_telegram_text()` to prevent parsing errors with special characters
+- **Comprehensive Testing**: Added unit tests for calendar analysis functionality and message escaping
+
+### 🐛 Fixed
+- **Telegram Parsing Errors**: Fixed "Can't parse entities" errors by properly escaping special characters in error messages
+- **Error Message Formatting**: All error messages now properly escape markdown characters that could cause Telegram API failures
 
 ### 📚 Updated
 - **Help Messages**: Updated `/calendar` command help to reflect new flexible usage

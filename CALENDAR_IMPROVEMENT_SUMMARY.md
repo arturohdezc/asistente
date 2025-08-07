@@ -118,3 +118,25 @@ Sistema:
 - ✅ **Backward Compatible:** El formato original `YYYY-MM-DD HH:MM` sigue funcionando
 - ✅ **Progressive Enhancement:** Nuevas funcionalidades no rompen uso existente
 - ✅ **Graceful Degradation:** Fallback a comportamiento básico si Gemini falla
+
+## 🐛 Correcciones Adicionales
+
+### Problema de Parsing de Telegram
+- **Issue:** Error "Can't parse entities: can't find end of the entity starting at byte offset 41"
+- **Causa:** Mensajes de error con caracteres especiales de markdown (`*`, `_`, `[`, `]`) causaban fallos en la API de Telegram
+- **Solución:** 
+  - Agregada función `_escape_telegram_text()` para escapar caracteres especiales
+  - Aplicada a todos los mensajes de error en comandos `/add`, `/done`, `/list`, `/calendar`
+  - Tests unitarios para validar el escape correcto
+
+### Mejoras de Robustez
+- **Error Handling:** Manejo más robusto de errores de API externa
+- **Message Formatting:** Prevención de fallos de parsing en Telegram
+- **User Experience:** Mensajes de error más claros y seguros
+
+## 📊 Estadísticas Finales
+
+- **Tests Implementados:** 19 tests unitarios (100% passing)
+- **Cobertura:** Análisis de calendario, comando Telegram, manejo de errores
+- **Compatibilidad:** 100% backward compatible
+- **Robustez:** Manejo comprehensivo de casos edge y errores
