@@ -31,6 +31,18 @@ class CalendarService:
             # Parse credentials from settings
             credentials_data = settings.get_calendar_credentials()
             
+            # Check if credentials have required fields
+            required_fields = ['token_uri', 'client_email', 'private_key']
+            missing_fields = [field for field in required_fields if field not in credentials_data]
+            
+            if missing_fields:
+                logger.warning(
+                    "Calendar service not configured properly", 
+                    missing_fields=missing_fields
+                )
+                self.service = None
+                return
+            
             # Create credentials from service account info
             self.credentials = Credentials.from_service_account_info(
                 credentials_data,
@@ -43,8 +55,8 @@ class CalendarService:
             logger.info("Calendar service initialized successfully")
             
         except Exception as e:
-            logger.error("Failed to initialize calendar service", error=str(e))
-            raise CalendarServiceError(f"Failed to initialize calendar service: {str(e)}")
+            logger.warning("Calendar service not available", error=str(e))
+            self.service = None
     
     async def create_event(
         self, 
@@ -67,6 +79,10 @@ class CalendarService:
         Returns:
             Created event data
         """
+        if self.service is None:
+            logger.warning("Calendar service not available, cannot create event")
+            raise CalendarServiceError("Calendar service not configured")
+            
         try:
             # Calculate end time
             end_time = start_time + timedelta(minutes=duration_minutes)
@@ -132,6 +148,10 @@ class CalendarService:
         Returns:
             List of upcoming events
         """
+        if self.service is None:
+            logger.warning("Calendar service not available, returning empty events")
+            return []
+            
         try:
             # Calculate time range
             now = datetime.utcnow()
@@ -256,6 +276,10 @@ class CalendarService:
         Returns:
             Created event data or None if task has no due date
         """
+        if self.service is None:
+            logger.warning("Calendar service not available, cannot create event from task")
+            return None
+            
         try:
             if not task.due:
                 logger.info("Task has no due date, skipping calendar event creation", task_id=task.id)
@@ -295,6 +319,10 @@ class CalendarService:
         Returns:
             List of events for the day
         """
+        if self.service is None:
+            logger.warning("Calendar service not available, returning empty schedule")
+            return []
+            
         try:
             # Calculate day boundaries
             start_of_day = date.replace(hour=0, minute=0, second=0, microsecond=0)

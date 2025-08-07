@@ -31,7 +31,16 @@ async def get_task_service(db: AsyncSession = Depends(get_db_session)) -> TaskSe
 
 async def get_calendar_service() -> CalendarService:
     """Get CalendarService instance"""
-    return CalendarService()
+    try:
+        return CalendarService()
+    except Exception as e:
+        logger.warning("Calendar service not available", error=str(e))
+        # Return a CalendarService instance that will handle unavailable service gracefully
+        service = CalendarService.__new__(CalendarService)
+        service.credentials = None
+        service.service = None
+        service.calendar_id = 'primary'
+        return service
 
 async def get_gemini_service() -> GeminiService:
     """Get GeminiService instance"""
