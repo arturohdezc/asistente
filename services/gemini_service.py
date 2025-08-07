@@ -48,9 +48,9 @@ class GeminiService:
     def __init__(self):
         self.api_key = settings.gemini_api_key
         self.base_url = "https://generativelanguage.googleapis.com/v1beta"
-        self.model = "gemini-1.5-pro-latest"
+        self.model = "gemini-1.5-flash"
         self.max_retries = 3
-        self.base_delay = 1  # Base delay for exponential backoff
+        self.base_delay = 2  # Base delay for exponential backoff: 2s, 4s, 8s
     
     async def analyze_text(self, text: str, source: str) -> AnalysisResult:
         """

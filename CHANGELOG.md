@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.3] - 2025-08-07 - Gemini API Optimization and Rate Limiting
+
+### 🔧 Fixed
+- **Gemini Model Change**: Switched from `gemini-1.5-pro-latest` to `gemini-1.5-flash` for better rate limits and performance
+- **Rate Limiting**: Implemented conservative rate limiting (5 requests/minute) to prevent 429 errors
+- **Retry Logic**: Increased base delay from 1s to 2s for exponential backoff (2s, 4s, 8s)
+- **API Key Configuration**: Fixed API key loading from Replit Secrets
+
+### ✨ Enhanced
+- **Performance**: Faster response times with gemini-1.5-flash model
+- **Reliability**: More robust handling of API rate limits
+- **Cost Optimization**: Lower cost per request with flash model
+
 ## [1.2.2] - 2025-08-07 - Enhanced Calendar Command with Natural Language Processing
 
 ### ✨ Enhanced

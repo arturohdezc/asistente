@@ -102,4 +102,5 @@ class RateLimiter:
         }
 
 # Global rate limiter instance for Gemini API
-gemini_rate_limiter = RateLimiter(max_requests=10, time_window=60)  # Conservative: 10 req/min
+# Using conservative limits to avoid 429 errors
+gemini_rate_limiter = RateLimiter(max_requests=5, time_window=60)  # Very conservative: 5 req/min
