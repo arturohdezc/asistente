@@ -186,7 +186,10 @@ Use a service account JSON key:
    # Gmail/Calendar: Use Cloud Function proxy (see below)
    ```
 
-**Troubleshooting**: See [REPLIT_DEPLOYMENT.md](REPLIT_DEPLOYMENT.md) for detailed troubleshooting guide.
+**Troubleshooting**: 
+- 🚨 **Nix Error?** Run `python install_replit.py` for manual setup
+- 📖 **Full Guide**: [REPLIT_DEPLOYMENT.md](REPLIT_DEPLOYMENT.md)
+- 🔧 **Nix Issues**: [REPLIT_NIX_TROUBLESHOOTING.md](REPLIT_NIX_TROUBLESHOOTING.md)
 
 ### Cloud Function Proxy Setup
 

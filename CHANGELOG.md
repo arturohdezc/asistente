@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.1] - 2025-08-07 - Nix Environment Fix
+
+### 🔧 Fixed
+- **Nix Environment Issues**: Fixed "couldn't get nix env building nix env" error in Replit
+- **Channel Compatibility**: Updated Nix channel from stable-24.05 to stable-23.11
+- **Fallback Configuration**: Added `.replit.backup` for non-Nix deployment
+- **Manual Installation**: Created `install_replit.py` for manual dependency installation
+
+### 📚 Documentation
+- Added `REPLIT_NIX_TROUBLESHOOTING.md` with comprehensive Nix troubleshooting guide
+- Updated deployment guides with Nix error solutions
+- Enhanced `start.py` with individual package installation fallback
+
 ## [1.1.0] - 2025-08-06 - Replit Deployment Optimization
 
 ### 🚀 Added

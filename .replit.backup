@@ -1,9 +1,6 @@
 run = "python start.py"
 modules = ["python-3.12"]
 
-[nix]
-channel = "stable-23.11"
-
 [deployment]
 run = ["sh", "-c", "python start.py"]
 

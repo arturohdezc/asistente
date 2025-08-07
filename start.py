@@ -21,9 +21,34 @@ def install_dependencies():
         print("✅ Dependencies installed successfully")
         return True
     except subprocess.CalledProcessError as e:
-        print(f"❌ Failed to install dependencies: {e}")
+        print(f"❌ Failed to install from requirements.txt: {e}")
+        print("💡 Trying manual installation of core packages...")
+        
+        # Try installing core packages individually
+        core_packages = [
+            "fastapi", "uvicorn[standard]", "sqlalchemy[asyncio]", 
+            "aiosqlite", "pydantic", "pydantic-settings", "httpx",
+            "python-dotenv", "structlog", "prometheus-client", "pytz"
+        ]
+        
+        success_count = 0
+        for package in core_packages:
+            try:
+                subprocess.check_call([
+                    sys.executable, "-m", "pip", "install", 
+                    package, "--user", "--quiet"
+                ])
+                success_count += 1
+            except subprocess.CalledProcessError:
+                continue
+        
+        if success_count >= 6:  # At least core packages
+            print(f"✅ Installed {success_count}/{len(core_packages)} packages")
+            return True
+        else:
+            print(f"⚠️  Only installed {success_count}/{len(core_packages)} packages")
     
-    print("💡 Trying to continue anyway...")
+    print("💡 Continuing with available packages...")
     return True  # Continue anyway
 
 
