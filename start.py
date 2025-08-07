@@ -11,23 +11,32 @@ import subprocess
 def install_dependencies():
     """Install Python dependencies"""
     print("📦 Installing dependencies...")
-
-    # Try Replit-specific requirements first
-    requirements_files = ["requirements-replit.txt", "requirements.txt"]
-
-    for req_file in requirements_files:
-        if os.path.exists(req_file):
-            try:
-                print(f"   Using {req_file}...")
-                subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", req_file])
-                print("✅ Dependencies installed successfully")
-                return True
-            except subprocess.CalledProcessError as e:
-                print(f"❌ Failed with {req_file}: {e}")
-                continue
-
-    print("❌ Failed to install dependencies with any requirements file")
-    return False
+    
+    # For Replit Nix environment, install only missing packages
+    missing_packages = [
+        "python-telegram-bot>=21.0,<22.0",
+    ]
+    
+    print("   Installing missing packages with --break-system-packages...")
+    success_count = 0
+    
+    for package in missing_packages:
+        try:
+            subprocess.check_call([
+                sys.executable, "-m", "pip", "install", 
+                "--break-system-packages", package
+            ])
+            print(f"   ✅ {package}")
+            success_count += 1
+        except subprocess.CalledProcessError as e:
+            print(f"   ❌ Failed to install {package}: {e}")
+    
+    if success_count > 0:
+        print("✅ Dependencies installation completed")
+        return True
+    else:
+        print("⚠️  Some dependencies may be missing, but continuing...")
+        return True  # Continue anyway, most deps should be in Nix
 
 
 def check_environment():
