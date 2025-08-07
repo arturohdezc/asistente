@@ -150,6 +150,15 @@
   - Create comprehensive Replit deployment guide with troubleshooting section
   - _Requirements: 8.1, 8.5, 11.3_
 
+- [x] 18. Optimizar para entorno Replit con Nix externally-managed
+  - Handle Replit's externally-managed Nix environment that prevents pip installs
+  - Create minimal replit.nix with core dependencies (fastapi, uvicorn, sqlalchemy, etc.)
+  - Update start.py to check available dependencies instead of installing them
+  - Implement fallback installation methods for missing dependencies
+  - Update deployment documentation with Replit environment specifics
+  - Consolidate all deployment guides into single comprehensive document
+  - _Requirements: 8.1, 11.3_
+
 ## Duración y Paralelismo
 
 **Sprint 1** (< 1 semana): Entrega rápida del MVP básico sin APIs externas reales, enfocado en estructura y funcionalidad core.

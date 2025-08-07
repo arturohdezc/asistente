@@ -696,7 +696,7 @@ def main():
 
 **File Structure Cleanup**:
 - Single `requirements.txt` (no duplicates)
-- Simplified `replit.nix` (system deps only)
+- Minimal `replit.nix` (core Python dependencies)
 - Removed redundant install scripts
 
 ## Error Handling

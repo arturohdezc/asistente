@@ -55,7 +55,7 @@ graph TB
 
 ## 🚀 Quick Start
 
-> **✅ Replit Ready**: This project has been optimized for easy deployment on Replit with simplified dependencies and robust startup scripts. See [REPLIT_DEPLOYMENT.md](REPLIT_DEPLOYMENT.md) for detailed instructions.
+> **✅ Replit Ready**: Optimized for one-click deployment on Replit with automatic dependency detection and robust startup scripts.
 
 ### Prerequisites
 
@@ -172,7 +172,7 @@ Use a service account JSON key:
 3. **Deploy with One Click**
    - Press the **Run** button
    - The `start.py` script handles everything:
-     - ✅ Installs dependencies automatically
+     - ✅ Checks available dependencies automatically
      - ✅ Validates environment variables  
      - ✅ Initializes SQLite database
      - ✅ Starts FastAPI server on port 8080
@@ -186,7 +186,9 @@ Use a service account JSON key:
    # Gmail/Calendar: Use Cloud Function proxy (see below)
    ```
 
-**Troubleshooting**: Ver [REPLIT_DEPLOYMENT.md](REPLIT_DEPLOYMENT.md) para guía completa.
+**Troubleshooting**: 
+- 🚨 **Pip errors?** Normal in Replit - dependencies are provided by Nix
+- 📖 **Full Guide**: [REPLIT_DEPLOYMENT.md](REPLIT_DEPLOYMENT.md)
 
 ### Cloud Function Proxy Setup
 

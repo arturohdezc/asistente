@@ -1,125 +1,131 @@
-# 🚀 Replit Deployment - Guía Completa
+# 🚀 Replit Deployment Guide
 
-## ⚡ **Deployment Rápido (3 pasos)**
+## ⚡ **Quick Deploy (3 Steps)**
 
-### 1. **Import a Replit**
+### 1. **Import to Replit**
+- Go to [Replit](https://replit.com) 
+- Create new Repl from GitHub repository
+- Project auto-configures with optimized Nix environment
 
-- Ve a [Replit](https://replit.com)
-- Crea nuevo Repl desde GitHub repository
-- El proyecto se auto-configura (NO necesita Nix)
-
-### 2. **Configurar Secrets**
-
-En Replit Secrets (🔒), agrega:
+### 2. **Add Secrets**
+In Replit Secrets (🔒), add:
 
 ```bash
-TELEGRAM_TOKEN=tu_bot_token_real
-TELEGRAM_WEBHOOK_SECRET=tu_webhook_secret
-GEMINI_API_KEY=tu_gemini_key_real
-CRON_TOKEN=tu_cron_token_seguro
+TELEGRAM_TOKEN=your_bot_token_here
+TELEGRAM_WEBHOOK_SECRET=your_webhook_secret
+GEMINI_API_KEY=your_gemini_api_key
+CRON_TOKEN=your_secure_cron_token
 ```
 
-### 3. **Ejecutar**
-
-Presiona **Run** - ¡Listo! El `start.py` maneja todo automáticamente.
+### 3. **Run**
+Press **Run** button - Done! The `start.py` handles everything automatically.
 
 ---
 
-## � P**Si hay problemas**
+## ✅ **Expected Output**
 
-### Error: "externally-managed-environment"
-
-**Solución**: Replit usa un entorno Nix que no permite pip install. Esto es normal.
-
-- ✅ **La aplicación funciona** - Las dependencias están en `replit.nix`
-- ✅ **Ignora los errores de pip** - El `start.py` continúa automáticamente
-- ✅ **Verifica que funciona** - Ve a tu URL de Repl, debería mostrar la app
-
-### Error: "couldn't get nix env building"
-
-**Solución**: Si el canal Nix falla:
-
-1. En Replit Shell: `nix-channel --update`
-2. O cambia el canal en `.replit` a `stable-22.11`
-
-### Dependencias no se instalan
-
-El `start.py` instala automáticamente. Si falla:
-
-```bash
-# Instalar manualmente
-pip install fastapi uvicorn[standard] sqlalchemy[asyncio] aiosqlite pydantic pydantic-settings httpx python-dotenv structlog prometheus-client pytz --user
-```
-
-### Variables de entorno faltantes
-
-Agrega en Replit Secrets (mínimo requerido):
-
-- `TELEGRAM_TOKEN`
-- `TELEGRAM_WEBHOOK_SECRET`
-- `GEMINI_API_KEY`
-- `CRON_TOKEN`
-
----
-
-## 🎯 **Configurar Webhooks**
-
-### Telegram Bot
-
-```bash
-curl -X POST "https://api.telegram.org/bot<TU_TOKEN>/setWebhook" \
-  -d "url=https://tu-repl.replit.dev/api/v1/telegram-webhook"
-```
-
-### Gmail/Calendar
-
-Usa el proxy en carpeta `proxy/` para manejar cold-starts.
-
----
-
-## ✅ **Verificar que funciona**
-
-Una vez iniciado, deberías ver:
+You should see:
 
 ```
 🤖 Personal Assistant Bot - Replit Startup
 ==================================================
-✅ Dependencies installed successfully
+📦 Checking dependencies...
+✅ Found 6 core dependencies:
+   ✅ FastAPI ✅ Uvicorn ✅ SQLAlchemy 
+   ✅ aiosqlite ✅ Pydantic ✅ Pydantic Settings
+✅ All core dependencies are available!
 ✅ Environment variables configured
 🚀 Starting Personal Assistant Bot...
+✅ Database initialized
+✅ Background services started
 INFO: Uvicorn running on http://0.0.0.0:8080
 ```
 
-### Endpoints disponibles
+---
 
-- `https://tu-repl.replit.dev/health` - Health check
-- `https://tu-repl.replit.dev/docs` - API documentation
-- `https://tu-repl.replit.dev/api/v1/metrics` - Métricas
+## 🔧 **Troubleshooting**
+
+### ❌ Error: "externally-managed-environment"
+**This is NORMAL** - Replit uses Nix environment that prevents pip installs.
+
+- ✅ **App still works** - Dependencies are provided by `replit.nix`
+- ✅ **Ignore pip errors** - `start.py` continues automatically
+- ✅ **Check your Repl URL** - Should show the running app
+
+### ❌ Error: "couldn't get nix env building"
+**Solution**: Nix channel issue
+1. In Replit Shell: `nix-channel --update`
+2. Or change channel in `.replit` to `stable-22.11`
+
+### ❌ Missing environment variables
+Add required secrets in Replit Secrets (🔒):
+- `TELEGRAM_TOKEN` (required)
+- `TELEGRAM_WEBHOOK_SECRET` (required)
+- `GEMINI_API_KEY` (required)
+- `CRON_TOKEN` (required)
 
 ---
 
-## 🤖 **Comandos del Bot**
+## 🤖 **Configure Telegram Bot**
 
-Una vez configurado el webhook de Telegram:
+### Set Webhook
+```bash
+curl -X POST "https://api.telegram.org/bot<YOUR_TOKEN>/setWebhook" \
+  -d "url=https://your-repl.replit.dev/api/v1/telegram-webhook"
+```
 
-- `/add <tarea>` - Agregar nueva tarea
-- `/list` - Listar tareas pendientes
-- `/done <id>` - Marcar tarea completada
-- `/calendar <fecha> <evento>` - Crear evento en Calendar
+### Test Commands
+- `/add Buy groceries` - Add new task
+- `/list` - List pending tasks
+- `/done 1` - Mark task as completed
+- `/calendar 2025-08-08 10:00 Meeting` - Create calendar event
 
 ---
 
-## 📊 **Funcionalidades**
+## 📊 **Available Endpoints**
 
-Tu bot tendrá:
+Once deployed, your bot provides:
 
-- ✅ **AI Task Extraction** - Análisis inteligente de emails con Gemini
-- ✅ **Multi-Account Gmail** - Monitoreo de múltiples cuentas
-- ✅ **Smart Calendar** - Integración con Google Calendar
-- ✅ **Telegram Interface** - Gestión completa via comandos
-- ✅ **Daily Summaries** - Resúmenes automáticos diarios
-- ✅ **Auto Backups** - Respaldos automáticos de base de datos
-- ✅ **REST API** - API completa con documentación
-- ✅ **Monitoring** - Métricas Prometheus integradas
+- **Main App**: `https://your-repl.replit.dev/`
+- **Health Check**: `https://your-repl.replit.dev/health`
+- **API Docs**: `https://your-repl.replit.dev/docs`
+- **Tasks API**: `https://your-repl.replit.dev/api/v1/tasks`
+- **Metrics**: `https://your-repl.replit.dev/api/v1/metrics`
 
-¡Tu asistente personal está listo! 🎉
+---
+
+## 🎯 **Features Ready**
+
+Your deployed bot includes:
+
+- ✅ **AI Task Extraction** - Gemini 1.5 Pro integration
+- ✅ **Multi-Account Gmail** - Ready for configuration
+- ✅ **Smart Calendar** - Google Calendar integration
+- ✅ **Telegram Interface** - Complete command system
+- ✅ **Daily Summaries** - Automated at 7:00 AM Mexico
+- ✅ **Auto Backups** - Daily database backups
+- ✅ **REST API** - Full CRUD with documentation
+- ✅ **Monitoring** - Prometheus metrics & structured logging
+
+---
+
+## � **FNext Steps**
+
+1. **Configure Telegram webhook** (see above)
+2. **Test bot commands** in Telegram
+3. **Optional**: Deploy proxy from `proxy/` folder for Gmail/Calendar webhooks
+4. **Optional**: Configure Gmail accounts in `GMAIL_ACCOUNTS_JSON` secret
+5. **Optional**: Set up Google Calendar service account in `CALENDAR_CREDENTIALS_JSON`
+
+---
+
+## 🎉 **Success!**
+
+Your Personal Assistant Bot is now running on Replit with:
+- 🚀 **One-click deployment**
+- 🤖 **AI-powered task management**
+- 📱 **Telegram interface**
+- 📊 **Complete monitoring**
+- 🔄 **Automated maintenance**
+
+**Your AI assistant is ready to help!** ✨
