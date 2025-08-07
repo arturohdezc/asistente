@@ -1,0 +1,4 @@
+# Cloud Function requirements for webhook proxy
+httpx>=0.25,<0.26
+structlog>=23.0,<24.0
+google-cloud-functions>=1.15,<2.0
