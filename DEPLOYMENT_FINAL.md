@@ -6,8 +6,8 @@ Tu Personal Assistant Bot está ahora **100% limpio** y optimizado para Replit.
 
 ## 🗑️ **Archivos Eliminados (Innecesarios)**
 
-### Configuración Nix (Ya no necesaria)
-- ❌ `replit.nix` - Eliminado, ahora usa solo módulos Python
+### Configuración Optimizada
+- ✅ `replit.nix` - Mínimo con dependencias core
 - ❌ `.replit.backup` - Redundante
 
 ### Documentación Duplicada
@@ -65,10 +65,13 @@ Presiona **Run** - ¡Listo!
 
 ## ✅ **Configuración Final**
 
-### `.replit` (Sin Nix)
+### `.replit` (Con Nix optimizado)
 ```toml
 run = "python start.py"
 modules = ["python-3.12"]
+
+[nix]
+channel = "stable-23.11"
 
 [deployment]
 run = ["sh", "-c", "python start.py"]
@@ -80,6 +83,22 @@ externalPort = 80
 [env]
 PYTHONPATH = "$REPL_HOME"
 PYTHONUNBUFFERED = "1"
+```
+
+### `replit.nix` (Mínimo)
+```nix
+{ pkgs }: {
+  deps = [
+    pkgs.python312
+    pkgs.python312Packages.fastapi
+    pkgs.python312Packages.uvicorn
+    pkgs.python312Packages.sqlalchemy
+    pkgs.python312Packages.aiosqlite
+    pkgs.python312Packages.pydantic
+    pkgs.python312Packages.pydantic-settings
+    # ... otras dependencias core
+  ];
+}
 ```
 
 ### `start.py` (Todo-en-uno)

@@ -8,80 +8,95 @@ import sys
 import subprocess
 
 
-def install_dependencies():
-    """Install Python dependencies from requirements.txt"""
-    print("📦 Installing dependencies...")
+def check_dependencies():
+    """Check if required dependencies are available"""
+    print("📦 Checking dependencies...")
     
-    # First try requirements.txt
-    try:
-        subprocess.check_call([
-            sys.executable, "-m", "pip", "install", 
-            "-r", "requirements.txt",
-            "--user", "--upgrade", "--quiet", "--no-warn-script-location"
-        ])
-        print("✅ Dependencies installed successfully from requirements.txt")
+    # Core dependencies that must be available
+    core_deps = [
+        ("fastapi", "FastAPI"),
+        ("uvicorn", "Uvicorn"),
+        ("sqlalchemy", "SQLAlchemy"),
+        ("aiosqlite", "aiosqlite"),
+        ("pydantic", "Pydantic"),
+        ("pydantic_settings", "Pydantic Settings")
+    ]
+    
+    missing_deps = []
+    available_deps = []
+    
+    for module, name in core_deps:
+        try:
+            __import__(module)
+            available_deps.append(name)
+        except ImportError:
+            missing_deps.append(name)
+    
+    if available_deps:
+        print(f"✅ Found {len(available_deps)} core dependencies:")
+        for dep in available_deps:
+            print(f"   ✅ {dep}")
+    
+    if missing_deps:
+        print(f"⚠️  Missing {len(missing_deps)} dependencies:")
+        for dep in missing_deps:
+            print(f"   ❌ {dep}")
+        
+        print("💡 Trying to install missing dependencies...")
+        return install_missing_dependencies(missing_deps)
+    
+    print("✅ All core dependencies are available!")
+    return True
+
+def install_missing_dependencies(missing_deps):
+    """Try to install missing dependencies with --break-system-packages if needed"""
+    print("🔧 Attempting to install missing dependencies...")
+    
+    # Map display names back to module names
+    dep_map = {
+        "FastAPI": "fastapi",
+        "Uvicorn": "uvicorn[standard]",
+        "SQLAlchemy": "sqlalchemy[asyncio]",
+        "aiosqlite": "aiosqlite",
+        "Pydantic": "pydantic",
+        "Pydantic Settings": "pydantic-settings"
+    }
+    
+    success_count = 0
+    for dep_name in missing_deps:
+        package_name = dep_map.get(dep_name, dep_name.lower())
+        
+        # Try different installation methods
+        install_methods = [
+            # Method 1: Standard user install
+            [sys.executable, "-m", "pip", "install", package_name, "--user", "--quiet"],
+            # Method 2: Break system packages (for Nix environments)
+            [sys.executable, "-m", "pip", "install", package_name, "--break-system-packages", "--quiet"],
+            # Method 3: Force reinstall
+            [sys.executable, "-m", "pip", "install", package_name, "--force-reinstall", "--quiet"]
+        ]
+        
+        installed = False
+        for method in install_methods:
+            try:
+                subprocess.check_call(method)
+                print(f"   ✅ {dep_name}")
+                success_count += 1
+                installed = True
+                break
+            except subprocess.CalledProcessError:
+                continue
+        
+        if not installed:
+            print(f"   ❌ {dep_name} (could not install)")
+    
+    if success_count > 0:
+        print(f"✅ Successfully installed {success_count} dependencies")
         return True
-    except subprocess.CalledProcessError as e:
-        print(f"❌ Failed to install from requirements.txt: {e}")
-        print("💡 Trying manual installation of core packages...")
-        
-        # Try installing core packages individually (without optional extras)
-        core_packages = [
-            "fastapi", 
-            "uvicorn", 
-            "sqlalchemy", 
-            "aiosqlite", 
-            "pydantic", 
-            "pydantic-settings", 
-            "httpx",
-            "python-dotenv"
-        ]
-        
-        # Optional packages (nice to have but not critical)
-        optional_packages = [
-            "structlog", 
-            "prometheus-client", 
-            "pytz",
-            "python-telegram-bot",
-            "google-api-python-client",
-            "google-auth"
-        ]
-        
-        success_count = 0
-        total_packages = len(core_packages) + len(optional_packages)
-        
-        # Install core packages first
-        for package in core_packages:
-            try:
-                subprocess.check_call([
-                    sys.executable, "-m", "pip", "install", 
-                    package, "--user", "--quiet", "--no-warn-script-location"
-                ])
-                success_count += 1
-                print(f"   ✅ {package}")
-            except subprocess.CalledProcessError:
-                print(f"   ❌ {package}")
-        
-        # Install optional packages
-        for package in optional_packages:
-            try:
-                subprocess.check_call([
-                    sys.executable, "-m", "pip", "install", 
-                    package, "--user", "--quiet", "--no-warn-script-location"
-                ])
-                success_count += 1
-                print(f"   ✅ {package}")
-            except subprocess.CalledProcessError:
-                print(f"   ⚠️  {package} (optional)")
-        
-        if success_count >= len(core_packages):  # All core packages installed
-            print(f"✅ Installed {success_count}/{total_packages} packages (all core packages ready)")
-            return True
-        else:
-            print(f"⚠️  Only installed {success_count}/{total_packages} packages")
-    
-    print("💡 Continuing with available packages...")
-    return True  # Continue anyway
+    else:
+        print("⚠️  Could not install dependencies, but continuing...")
+        print("💡 Dependencies may already be available in the environment")
+        return True  # Continue anyway, they might be available
 
 
 def check_environment():
@@ -148,8 +163,8 @@ def main():
     print("🤖 Personal Assistant Bot - Replit Startup")
     print("=" * 50)
 
-    # Step 1: Install dependencies
-    if not install_dependencies():
+    # Step 1: Check dependencies
+    if not check_dependencies():
         sys.exit(1)
 
     # Step 2: Check environment
