@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.2] - 2025-08-07 - Enhanced Calendar Command with Natural Language Processing
+
+### ✨ Enhanced
+- **Calendar Command Intelligence**: `/calendar` command now uses Gemini AI to parse natural language date/time inputs
+  - Supports flexible formats: "Meeting tomorrow at 2pm", "Team standup Monday 9:30am", "Project review next Friday at 3:00 PM for 2 hours"
+  - Automatically extracts event title, date/time, duration, and description
+  - Falls back gracefully when date/time cannot be extracted
+  - Maintains backward compatibility with exact format inputs
+
+### 🔧 Technical Improvements
+- **New Gemini Service Method**: Added `analyze_calendar_event()` for calendar-specific text analysis
+- **Enhanced Data Models**: Added `CalendarEventData` and `CalendarAnalysisResult` classes
+- **Improved Error Handling**: Better user feedback when date/time extraction fails
+- **Comprehensive Testing**: Added unit tests for calendar analysis functionality
+
+### 📚 Updated
+- **Help Messages**: Updated `/calendar` command help to reflect new flexible usage
+- **User Experience**: More intuitive calendar event creation with natural language
+
 ## [1.2.1] - 2025-08-07 - Replit Environment Fix
 
 ### 🔧 Fixed

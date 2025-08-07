@@ -28,7 +28,7 @@ class Task(Base):
     source: Mapped[str] = mapped_column(String(100), nullable=False)  # email origen
     priority: Mapped[str] = mapped_column(String(10), default=Priority.NORMAL.value)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
-    updated_at: Mapped[datetime] = mapped_column(DateTime, onupdate=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
     
     # Índices para optimización
     __table_args__ = (

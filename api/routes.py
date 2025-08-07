@@ -48,10 +48,11 @@ async def get_gemini_service() -> GeminiService:
 
 async def get_telegram_service(
     task_service: TaskService = Depends(get_task_service),
-    calendar_service: CalendarService = Depends(get_calendar_service)
+    calendar_service: CalendarService = Depends(get_calendar_service),
+    gemini_service: GeminiService = Depends(get_gemini_service)
 ) -> TelegramService:
     """Get TelegramService instance"""
-    return TelegramService(task_service, calendar_service)
+    return TelegramService(task_service, calendar_service, gemini_service)
 
 async def get_summary_service() -> SummaryService:
     """Get SummaryService instance"""

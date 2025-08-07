@@ -11,6 +11,7 @@ from telegram.constants import ParseMode
 from models.task import Task, TaskStatus, Priority
 from services.task_service import TaskService
 from services.calendar_service import CalendarService
+from services.gemini_service import GeminiService
 from config.settings import settings
 
 logger = structlog.get_logger()
@@ -22,9 +23,10 @@ class TelegramServiceError(Exception):
 class TelegramService:
     """Service for handling Telegram bot interactions"""
     
-    def __init__(self, task_service: TaskService, calendar_service: Optional['CalendarService'] = None):
+    def __init__(self, task_service: TaskService, calendar_service: Optional['CalendarService'] = None, gemini_service: Optional[GeminiService] = None):
         self.task_service = task_service
         self.calendar_service = calendar_service
+        self.gemini_service = gemini_service or GeminiService()
         self.bot_token = settings.telegram_token
         self.webhook_secret = settings.telegram_webhook_secret
         self.bot = Bot(token=self.bot_token)
@@ -128,7 +130,7 @@ class TelegramService:
             "/add `<text>` - Create a new task\n"
             "/done `<id>` - Mark task as completed\n"
             "/list - List all tasks grouped by priority\n"
-            "/calendar `<YYYY-MM-DD HH:MM>` `<text>` - Create calendar event\n"
+            "/calendar `<event description with date/time>` - Create calendar event\n"
             "/help - Show this help message\n\n"
             "**Priority Indicators:**\n"
             "🔴 Urgent - Due within 24 hours\n"
@@ -143,21 +145,57 @@ class TelegramService:
             return "❌ Please provide task description. Usage: /add `<task description>`"
         
         try:
-            # Create task with user_id as source
-            task = await self.task_service.create_task(
-                title=text.strip(),
+            # Use Gemini to analyze the text and extract structured task information
+            analysis_result = await self.gemini_service.analyze_text(
+                text=text.strip(),
                 source=f"telegram_user_{user_id}"
             )
             
-            priority_emoji = self._get_priority_emoji(Priority(task.priority))
+            # Create tasks from Gemini analysis
+            created_tasks = []
+            for task_data in analysis_result.tasks:
+                task = await self.task_service.create_task(
+                    title=task_data.title,
+                    due=task_data.due,
+                    source=f"telegram_user_{user_id}",
+                    priority=task_data.priority
+                )
+                created_tasks.append(task)
             
-            return (
-                f"✅ Task created successfully!\n\n"
-                f"**ID:** {task.id}\n"
-                f"**Title:** {task.title}\n"
-                f"**Priority:** {priority_emoji} {task.priority.title()}\n"
-                f"**Status:** {task.status.title()}"
-            )
+            # If no tasks were extracted, create a simple task
+            if not created_tasks:
+                task = await self.task_service.create_task(
+                    title=text.strip(),
+                    source=f"telegram_user_{user_id}",
+                    priority=Priority.NORMAL
+                )
+                created_tasks.append(task)
+            
+            # Format response
+            if len(created_tasks) == 1:
+                task = created_tasks[0]
+                priority_emoji = self._get_priority_emoji(Priority(task.priority))
+                
+                response = (
+                    f"✅ Task created successfully!\n\n"
+                    f"**ID:** {task.id}\n"
+                    f"**Title:** {task.title}\n"
+                    f"**Priority:** {priority_emoji} {task.priority.title()}\n"
+                    f"**Status:** {task.status.title()}"
+                )
+                
+                if task.due:
+                    response += f"\n**Due:** {task.due.strftime('%Y-%m-%d %H:%M')}"
+                
+                return response
+            else:
+                # Multiple tasks created
+                response = f"✅ Created {len(created_tasks)} tasks from your message:\n\n"
+                for task in created_tasks:
+                    priority_emoji = self._get_priority_emoji(Priority(task.priority))
+                    response += f"**{task.id}.** {task.title} {priority_emoji}\n"
+                
+                return response
             
         except Exception as e:
             logger.error("Failed to create task", text=text, user_id=user_id, error=str(e))
@@ -247,45 +285,54 @@ class TelegramService:
         
         if not args.strip():
             return (
-                "❌ Please provide date, time and event description.\n"
-                "Usage: /calendar `<YYYY-MM-DD HH:MM>` `<event description>`"
+                "❌ Please provide event details.\n"
+                "Usage: /calendar `<event description with date/time>`\n"
+                "Examples:\n"
+                "• /calendar Meeting tomorrow at 2pm\n"
+                "• /calendar Team standup Monday 9:30am\n"
+                "• /calendar 2024-01-15 14:30 Project review"
             )
         
         try:
-            # Parse datetime and description
-            parts = args.strip().split(" ", 2)
-            if len(parts) < 3:
+            # Use Gemini to analyze the text and extract event information
+            analysis_result = await self.gemini_service.analyze_calendar_event(
+                text=args.strip(),
+                source=f"telegram_user_{user_id}"
+            )
+            
+            if not analysis_result.event_datetime:
                 return (
-                    "❌ Invalid format. Usage: /calendar `<YYYY-MM-DD HH:MM>` `<event description>`"
+                    "❌ Could not extract date/time from your message.\n"
+                    "Please include when the event should happen.\n"
+                    "Examples:\n"
+                    "• /calendar Meeting tomorrow at 2pm\n"
+                    "• /calendar Team standup Monday 9:30am\n"
+                    "• /calendar 2024-01-15 14:30 Project review"
                 )
-            
-            date_str = parts[0]
-            time_str = parts[1]
-            description = parts[2]
-            
-            # Parse datetime
-            datetime_str = f"{date_str} {time_str}"
-            event_datetime = datetime.strptime(datetime_str, "%Y-%m-%d %H:%M")
             
             # Create calendar event
             event = await self.calendar_service.create_event(
-                title=description,
-                start_time=event_datetime,
-                duration_minutes=60  # Default 1 hour
+                title=analysis_result.title,
+                start_time=analysis_result.event_datetime,
+                duration_minutes=analysis_result.duration_minutes or 60,
+                description=analysis_result.description
             )
             
-            return (
+            response = (
                 f"📅 Calendar event created successfully!\n\n"
-                f"**Title:** {description}\n"
-                f"**Date:** {event_datetime.strftime('%Y-%m-%d %H:%M')}\n"
-                f"**Event ID:** {event.get('id', 'N/A')}"
+                f"**Title:** {analysis_result.title}\n"
+                f"**Date:** {analysis_result.event_datetime.strftime('%Y-%m-%d %H:%M')}\n"
+                f"**Duration:** {analysis_result.duration_minutes or 60} minutes"
             )
             
-        except ValueError as e:
-            return (
-                f"❌ Invalid date/time format. Use YYYY-MM-DD HH:MM format.\n"
-                f"Example: /calendar 2024-01-15 14:30 Team meeting"
-            )
+            if analysis_result.description:
+                response += f"\n**Description:** {analysis_result.description}"
+            
+            if event.get('id'):
+                response += f"\n**Event ID:** {event.get('id')}"
+            
+            return response
+            
         except Exception as e:
             logger.error("Failed to create calendar event", args=args, user_id=user_id, error=str(e))
             return f"❌ Failed to create calendar event: {str(e)}"

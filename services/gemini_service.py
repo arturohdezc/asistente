@@ -25,6 +25,20 @@ class AnalysisResult(BaseModel):
     context: str = Field(default="")
     priority: Priority = Priority.NORMAL
 
+class CalendarEventData(BaseModel):
+    """Calendar event data extracted from text"""
+    title: str = Field(..., min_length=1, max_length=500)
+    event_datetime: Optional[datetime] = None
+    duration_minutes: Optional[int] = Field(default=60, ge=1, le=1440)  # 1 minute to 24 hours
+    description: Optional[str] = None
+
+class CalendarAnalysisResult(BaseModel):
+    """Result of calendar event analysis"""
+    title: str = Field(..., min_length=1, max_length=500)
+    event_datetime: Optional[datetime] = None
+    duration_minutes: Optional[int] = Field(default=60, ge=1, le=1440)
+    description: Optional[str] = None
+
 # GeminiServiceError is now imported from core.exceptions
 
 class GeminiService:
@@ -311,3 +325,178 @@ If no actionable tasks are found, return empty tasks array but still provide con
                 error=str(e)
             )
             raise GeminiServiceError(f"Failed to parse Gemini response: {str(e)}")
+    
+    async def analyze_calendar_event(self, text: str, source: str) -> CalendarAnalysisResult:
+        """
+        Analyze text and extract calendar event information.
+        
+        Args:
+            text: Text content to analyze for calendar event
+            source: Source of the text (telegram user, etc.)
+            
+        Returns:
+            CalendarAnalysisResult with extracted event details
+        """
+        try:
+            logger.info(
+                "Starting calendar event analysis",
+                source=source,
+                text_length=len(text)
+            )
+            
+            # Create calendar analysis prompt
+            prompt = self._create_calendar_analysis_prompt(text, source)
+            
+            # Call Gemini API with circuit breaker and retry logic
+            circuit_breaker = get_gemini_circuit_breaker()
+            response = await circuit_breaker.call(self._call_gemini_with_retry, prompt)
+            
+            # Parse response
+            result = self._parse_calendar_gemini_response(response)
+            
+            logger.info(
+                "Calendar event analysis completed",
+                source=source,
+                title=result.title,
+                has_datetime=result.event_datetime is not None
+            )
+            
+            return result
+            
+        except Exception as e:
+            logger.error(
+                "Failed to analyze calendar event",
+                source=source,
+                error=str(e),
+                exc_info=True
+            )
+            raise wrap_external_error(
+                e, "Gemini", "analyze_calendar_event", 
+                {"source": source, "text_length": len(text)}
+            )
+    
+    def _create_calendar_analysis_prompt(self, text: str, source: str) -> str:
+        """Create structured prompt for calendar event analysis"""
+        current_time = datetime.utcnow().isoformat()
+        
+        prompt = f"""
+You are an AI assistant that extracts calendar event information from natural language text.
+
+Current time: {current_time}
+Source: {source}
+
+Text to analyze:
+{text}
+
+Please analyze this text and extract calendar event information. Determine:
+1. Event title (clear, concise, max 500 characters)
+2. Date and time when the event should occur (ISO format with timezone)
+3. Duration in minutes (default 60 if not specified)
+4. Additional description if provided
+
+Date/time parsing rules:
+- "tomorrow" = next day at specified time or 9:00 AM if no time given
+- "Monday", "Tuesday", etc. = next occurrence of that weekday
+- "next week" = same day next week
+- "2pm", "14:30", "2:30 PM" = convert to 24-hour format
+- If only date given, default to 9:00 AM
+- If only time given, assume today if time hasn't passed, otherwise tomorrow
+- Always output in ISO format: "2024-01-15T14:30:00Z"
+
+Duration parsing rules:
+- "30 minutes", "1 hour", "2 hours" = convert to minutes
+- Default to 60 minutes if not specified
+- Maximum 1440 minutes (24 hours)
+
+Respond with valid JSON in this exact format:
+{{
+  "title": "Event title",
+  "event_datetime": "2024-01-15T14:30:00Z" or null,
+  "duration_minutes": 60,
+  "description": "Additional details" or null
+}}
+
+If you cannot extract a clear date/time, set event_datetime to null.
+Always provide a meaningful title even if date/time is unclear.
+"""
+        return prompt
+    
+    def _parse_calendar_gemini_response(self, response: Dict[str, Any]) -> CalendarAnalysisResult:
+        """Parse Gemini API response for calendar event data"""
+        try:
+            # Extract text from response
+            candidates = response.get("candidates", [])
+            if not candidates:
+                raise GeminiServiceError("No candidates in Gemini response")
+            
+            content = candidates[0].get("content", {})
+            parts = content.get("parts", [])
+            if not parts:
+                raise GeminiServiceError("No parts in Gemini response")
+            
+            text_response = parts[0].get("text", "")
+            if not text_response:
+                raise GeminiServiceError("Empty text in Gemini response")
+            
+            # Parse JSON from response
+            try:
+                # Clean up response text (remove markdown code blocks if present)
+                clean_text = text_response.strip()
+                if clean_text.startswith("```json"):
+                    clean_text = clean_text[7:]
+                if clean_text.endswith("```"):
+                    clean_text = clean_text[:-3]
+                clean_text = clean_text.strip()
+                
+                parsed_data = json.loads(clean_text)
+            except json.JSONDecodeError as e:
+                logger.error(
+                    "Failed to parse calendar Gemini JSON response",
+                    response_text=text_response,
+                    error=str(e)
+                )
+                # Return basic result if parsing fails
+                return CalendarAnalysisResult(
+                    title="Event",
+                    event_datetime=None,
+                    duration_minutes=60,
+                    description=None
+                )
+            
+            # Parse event datetime if present
+            event_datetime = None
+            if parsed_data.get("event_datetime"):
+                try:
+                    event_datetime = datetime.fromisoformat(
+                        parsed_data["event_datetime"].replace("Z", "+00:00")
+                    )
+                except Exception as e:
+                    logger.warning(
+                        "Failed to parse event datetime",
+                        datetime_str=parsed_data.get("event_datetime"),
+                        error=str(e)
+                    )
+            
+            # Extract other fields with defaults
+            title = parsed_data.get("title", "Event").strip()
+            duration_minutes = parsed_data.get("duration_minutes", 60)
+            description = parsed_data.get("description")
+            
+            # Validate duration
+            if not isinstance(duration_minutes, int) or duration_minutes < 1 or duration_minutes > 1440:
+                duration_minutes = 60
+            
+            return CalendarAnalysisResult(
+                title=title,
+                event_datetime=event_datetime,
+                duration_minutes=duration_minutes,
+                description=description
+            )
+            
+        except Exception as e:
+            logger.error(
+                "Failed to parse calendar Gemini response",
+                response=response,
+                error=str(e)
+            )
+            raise GeminiServiceError(f"Failed to parse calendar Gemini response: {str(e)}")
