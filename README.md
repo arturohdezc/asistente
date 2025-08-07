@@ -181,7 +181,7 @@ Use a service account JSON key:
    ```bash
    # Telegram Bot Webhook
    curl -X POST "https://api.telegram.org/bot<TOKEN>/setWebhook" \
-     -d "url=https://your-repl.replit.dev/api/v1/telegram-webhook"
+     -d "url=https://your-repl.replit.dev/api/v1/webhook/telegram"
    
    # Gmail/Calendar: Use Cloud Function proxy (see below)
    ```

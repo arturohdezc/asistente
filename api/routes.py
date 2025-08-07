@@ -60,17 +60,20 @@ async def health_check():
 
 # Telegram webhook endpoint
 @router.post("/webhook/telegram")
+@router.post("/webhook/telegram/{token}")
 async def telegram_webhook(
     request: Request,
     background_tasks: BackgroundTasks,
+    token: Optional[str] = None,
     x_telegram_bot_api_secret_token: Optional[str] = Header(None),
     telegram_service: TelegramService = Depends(get_telegram_service)
 ):
     """Handle Telegram webhook updates"""
     try:
-        # Validate webhook token
+        # Validate webhook token (from header or path parameter)
+        webhook_token = token or x_telegram_bot_api_secret_token or ""
         validate_webhook_token(
-            x_telegram_bot_api_secret_token or "",
+            webhook_token,
             settings.telegram_webhook_secret,
             "Telegram"
         )

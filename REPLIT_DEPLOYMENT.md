@@ -3,11 +3,13 @@
 ## ⚡ **Quick Deploy (3 Steps)**
 
 ### 1. **Import to Replit**
-- Go to [Replit](https://replit.com) 
+
+- Go to [Replit](https://replit.com)
 - Create new Repl from GitHub repository
 - Project auto-configures with optimized Nix environment
 
 ### 2. **Add Secrets**
+
 In Replit Secrets (🔒), add:
 
 ```bash
@@ -18,6 +20,7 @@ CRON_TOKEN=your_secure_cron_token
 ```
 
 ### 3. **Run**
+
 Press **Run** button - Done! The `start.py` handles everything automatically.
 
 ---
@@ -46,6 +49,7 @@ INFO: Uvicorn running on http://0.0.0.0:8080
 ## 🔧 **Troubleshooting**
 
 ### ❌ Error: "externally-managed-environment"
+
 **This is NORMAL** - Replit uses Nix environment that prevents pip installs.
 
 - ✅ **App still works** - Dependencies are provided by `replit.nix`
@@ -53,12 +57,16 @@ INFO: Uvicorn running on http://0.0.0.0:8080
 - ✅ **Check your Repl URL** - Should show the running app
 
 ### ❌ Error: "couldn't get nix env building"
+
 **Solution**: Nix channel issue
+
 1. In Replit Shell: `nix-channel --update`
 2. Or change channel in `.replit` to `stable-22.11`
 
 ### ❌ Missing environment variables
+
 Add required secrets in Replit Secrets (🔒):
+
 - `TELEGRAM_TOKEN` (required)
 - `TELEGRAM_WEBHOOK_SECRET` (required)
 - `GEMINI_API_KEY` (required)
@@ -69,12 +77,23 @@ Add required secrets in Replit Secrets (🔒):
 ## 🤖 **Configure Telegram Bot**
 
 ### Set Webhook
+
 ```bash
+# Option 1: Simple webhook (recommended)
 curl -X POST "https://api.telegram.org/bot<YOUR_TOKEN>/setWebhook" \
-  -d "url=https://your-repl.replit.dev/api/v1/telegram-webhook"
+  -d "url=https://your-repl.replit.dev/api/v1/webhook/telegram"
+
+# Option 2: With secret token in header
+curl -X POST "https://api.telegram.org/bot<YOUR_TOKEN>/setWebhook" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://your-repl.replit.dev/api/v1/webhook/telegram",
+    "secret_token": "your_webhook_secret"
+  }'
 ```
 
 ### Test Commands
+
 - `/add Buy groceries` - Add new task
 - `/list` - List pending tasks
 - `/done 1` - Mark task as completed
@@ -122,6 +141,7 @@ Your deployed bot includes:
 ## 🎉 **Success!**
 
 Your Personal Assistant Bot is now running on Replit with:
+
 - 🚀 **One-click deployment**
 - 🤖 **AI-powered task management**
 - 📱 **Telegram interface**
