@@ -5,7 +5,7 @@
 - [x] 1. Crear la estructura del proyecto y repositorio
   - Create directory structure for FastAPI application with services, models, and API layers
   - Configure replit.nix with Python 3.12 and required dependencies
-  - Generate requirements.txt with version ranges: fastapi>=0.111,<0.120, sqlalchemy[asyncio]>=2.0,<2.1, python-telegram-bot>=21.0,<22.0, google-api-python-client>=2.0,<3.0, aiosqlite>=0.19,<0.20, httpx>=0.25,<0.26, pydantic>=2.0,<3.0
+  - Generate requirements.txt with simplified dependencies (no version constraints): fastapi, uvicorn[standard], sqlalchemy[asyncio], aiosqlite, python-telegram-bot, google-api-python-client, google-auth, httpx, pydantic, pydantic-settings, prometheus-client, structlog, python-dotenv, pytz
   - Create .env.example file for local testing before using Replit Secrets
   - Set up main.py with FastAPI application initialization
   - _Requirements: 8.1, 8.5, 8.6_
@@ -134,6 +134,21 @@
   - Execute complete end-to-end testing with real webhook payloads
   - Validate all service integrations and monitoring systems
   - _Requirements: 11.3, 11.4, 10.4_
+
+## Sprint 5 – Replit Deployment Fixes
+
+- [x] 17. Resolver problemas de compatibilidad con Pydantic v2 y deployment en Replit
+  - Fix Pydantic v2 compatibility: migrate from `BaseSettings` to `pydantic-settings`
+  - Update validators from `@validator` to `@field_validator` with `@classmethod`
+  - Replace `class Config` with `model_config` dictionary
+  - Simplify environment variable names: `X_TELEGRAM_BOT_API_SECRET_TOKEN` → `TELEGRAM_WEBHOOK_SECRET`
+  - Remove version constraints from requirements.txt to avoid dependency conflicts
+  - Implement flexible directory creation with fallback for cross-platform compatibility
+  - Create robust startup script with dependency installation and environment validation
+  - Clean up duplicate files (requirements-replit.txt, install scripts)
+  - Update replit.nix to use system dependencies only, let pip handle Python packages
+  - Create comprehensive Replit deployment guide with troubleshooting section
+  - _Requirements: 8.1, 8.5, 11.3_
 
 ## Duración y Paralelismo
 

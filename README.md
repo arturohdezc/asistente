@@ -55,6 +55,8 @@ graph TB
 
 ## 🚀 Quick Start
 
+> **✅ Replit Ready**: This project has been optimized for easy deployment on Replit with simplified dependencies and robust startup scripts. See [REPLIT_DEPLOYMENT.md](REPLIT_DEPLOYMENT.md) for detailed instructions.
+
 ### Prerequisites
 
 - Python 3.12+
@@ -99,7 +101,7 @@ graph TB
 | Variable | Description | Required | Example |
 |----------|-------------|----------|---------|
 | `TELEGRAM_TOKEN` | Telegram Bot API token | ✅ | `1234567890:ABCdefGHIjklMNOpqrsTUVwxyz` |
-| `X_TELEGRAM_BOT_API_SECRET_TOKEN` | Telegram webhook secret | ✅ | `your-secret-token` |
+| `TELEGRAM_WEBHOOK_SECRET` | Telegram webhook secret | ✅ | `your-secret-token` |
 | `GMAIL_ACCOUNTS_JSON` | Gmail accounts configuration | ✅ | `{"accounts": [...]}` |
 | `CALENDAR_CREDENTIALS_JSON` | Google Calendar service account | ✅ | `{"type": "service_account", ...}` |
 | `GEMINI_API_KEY` | Gemini 1.5 Pro API key | ✅ | `AIza...` |
@@ -146,32 +148,45 @@ Use a service account JSON key:
 
 ## 🌐 Deployment
 
-### Replit Deployment
+### Replit Deployment (Recommended)
 
-1. **Create a new Repl**
+> **🎉 Simplified Deployment**: The project now includes optimized startup scripts and dependency management for seamless Replit deployment.
+
+1. **Import to Replit**
    - Go to [Replit](https://replit.com)
-   - Create a new Python Repl
-   - Import from GitHub repository
+   - Create new Repl from GitHub repository
+   - The project will auto-configure with `replit.nix`
 
-2. **Configure Secrets**
-   - Go to Secrets tab in Replit
-   - Add all required environment variables
-   - Use the `.env.example` as reference
-
-3. **Install Dependencies**
+2. **Configure Environment Variables**
+   Add these to Replit Secrets (🔒):
    ```bash
-   pip install -r requirements.txt
+   TELEGRAM_TOKEN=your_bot_token
+   TELEGRAM_WEBHOOK_SECRET=your_webhook_secret  
+   GEMINI_API_KEY=your_gemini_key
+   CRON_TOKEN=your_cron_token
+   # Optional for full functionality:
+   GMAIL_ACCOUNTS_JSON={"accounts": [...]}
+   CALENDAR_CREDENTIALS_JSON={"type": "service_account", ...}
    ```
 
-4. **Run the Application**
+3. **Deploy with One Click**
+   - Press the **Run** button
+   - The `start.py` script handles everything:
+     - ✅ Installs dependencies automatically
+     - ✅ Validates environment variables  
+     - ✅ Initializes SQLite database
+     - ✅ Starts FastAPI server on port 8080
+
+4. **Configure Webhooks**
    ```bash
-   python main.py
+   # Telegram Bot Webhook
+   curl -X POST "https://api.telegram.org/bot<TOKEN>/setWebhook" \
+     -d "url=https://your-repl.replit.dev/api/v1/telegram-webhook"
+   
+   # Gmail/Calendar: Use Cloud Function proxy (see below)
    ```
 
-5. **Configure Webhooks**
-   - Telegram: `https://your-repl.replit.dev/api/v1/webhook/telegram`
-   - Gmail: Use Cloud Function proxy (see below)
-   - Calendar: Use Cloud Function proxy (see below)
+**Troubleshooting**: See [REPLIT_DEPLOYMENT.md](REPLIT_DEPLOYMENT.md) for detailed troubleshooting guide.
 
 ### Cloud Function Proxy Setup
 

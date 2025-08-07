@@ -627,13 +627,14 @@ class DailySummaryResponse(BaseModel):
 ### 3. Configuration Models
 
 ```python
-from pydantic import BaseSettings, Field
+from pydantic import Field, field_validator
+from pydantic_settings import BaseSettings
 from typing import List, Dict
 
 class Settings(BaseSettings):
     # Telegram
     telegram_token: str = Field(..., env="TELEGRAM_TOKEN")
-    telegram_webhook_secret: str = Field(..., env="X_TELEGRAM_BOT_API_SECRET_TOKEN")
+    telegram_webhook_secret: str = Field(..., env="TELEGRAM_WEBHOOK_SECRET")
     
     # Gmail & Calendar
     gmail_accounts_json: str = Field(..., env="GMAIL_ACCOUNTS_JSON")
@@ -655,10 +656,48 @@ class Settings(BaseSettings):
     # Limits
     max_tasks_limit: int = Field(default=10000)
     
-    class Config:
-        env_file = ".env"
-        case_sensitive = False
+    model_config = {
+        "env_file": ".env",
+        "case_sensitive": False,
+        "extra": "ignore"
+    }
 ```
+
+## Deployment Considerations
+
+### Replit Optimization
+
+El sistema ha sido optimizado para deployment en Replit con las siguientes mejoras:
+
+**Pydantic v2 Compatibility**:
+- Migrado de `pydantic.BaseSettings` a `pydantic-settings.BaseSettings`
+- Actualizado validators de `@validator` a `@field_validator` con `@classmethod`
+- Reemplazado `class Config` con `model_config` dictionary
+- Configurado `"extra": "ignore"` para mayor flexibilidad
+
+**Simplified Dependencies**:
+- Removido constraints de versión estrictos que causaban conflictos
+- Dependencies sin versiones específicas para mayor compatibilidad
+- Fallback automático para directorios que no se pueden crear
+
+**Environment Variables**:
+- Simplificado `X_TELEGRAM_BOT_API_SECRET_TOKEN` → `TELEGRAM_WEBHOOK_SECRET`
+- Validación robusta con defaults para variables opcionales
+- Cross-platform path handling
+
+**Startup Process**:
+```python
+# start.py - Robust startup script
+def main():
+    install_dependencies()    # Auto-install from requirements.txt
+    check_environment()      # Validate required env vars
+    start_application()      # Launch FastAPI with uvicorn
+```
+
+**File Structure Cleanup**:
+- Single `requirements.txt` (no duplicates)
+- Simplified `replit.nix` (system deps only)
+- Removed redundant install scripts
 
 ## Error Handling
 

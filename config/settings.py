@@ -1,4 +1,5 @@
-from pydantic import BaseSettings, Field, validator
+from pydantic import Field, field_validator
+from pydantic_settings import BaseSettings
 from typing import Dict, List, Optional
 import json
 import os
@@ -9,7 +10,7 @@ class Settings(BaseSettings):
     
     # Telegram Configuration
     telegram_token: str = Field(..., env="TELEGRAM_TOKEN")
-    telegram_webhook_secret: str = Field(..., env="X_TELEGRAM_BOT_API_SECRET_TOKEN")
+    telegram_webhook_secret: str = Field(..., env="TELEGRAM_WEBHOOK_SECRET")
     
     # Gmail Configuration
     gmail_accounts_json: str = Field(..., env="GMAIL_ACCOUNTS_JSON")
@@ -25,13 +26,13 @@ class Settings(BaseSettings):
     
     # Database Configuration
     database_url: str = Field(
-        default="sqlite+aiosqlite:///home/runner/db.sqlite3",
+        default="sqlite+aiosqlite:///./db.sqlite3",
         env="DATABASE_URL"
     )
     
     # Backup Configuration
     backup_directory: str = Field(
-        default="/home/runner/backups",
+        default="./backups",
         env="BACKUP_DIRECTORY"
     )
     backup_retention_days: int = Field(default=7, env="BACKUP_RETENTION_DAYS")
@@ -46,11 +47,14 @@ class Settings(BaseSettings):
     debug: bool = Field(default=False, env="DEBUG")
     log_level: str = Field(default="INFO", env="LOG_LEVEL")
     
-    class Config:
-        env_file = ".env"
-        case_sensitive = False
+    model_config = {
+        "env_file": ".env",
+        "case_sensitive": False,
+        "extra": "ignore"
+    }
         
-    @validator('gmail_accounts_json')
+    @field_validator('gmail_accounts_json')
+    @classmethod
     def validate_gmail_accounts_json(cls, v):
         """Validate Gmail accounts JSON format"""
         try:
@@ -61,7 +65,8 @@ class Settings(BaseSettings):
         except json.JSONDecodeError:
             raise ValueError('Invalid JSON format for Gmail accounts')
     
-    @validator('calendar_credentials_json')
+    @field_validator('calendar_credentials_json')
+    @classmethod
     def validate_calendar_credentials_json(cls, v):
         """Validate Calendar credentials JSON format"""
         try:
@@ -72,11 +77,19 @@ class Settings(BaseSettings):
         except json.JSONDecodeError:
             raise ValueError('Invalid JSON format for Calendar credentials')
     
-    @validator('backup_directory')
+    @field_validator('backup_directory')
+    @classmethod
     def validate_backup_directory(cls, v):
         """Ensure backup directory exists"""
         backup_path = Path(v)
-        backup_path.mkdir(parents=True, exist_ok=True)
+        try:
+            backup_path.mkdir(parents=True, exist_ok=True)
+        except (OSError, PermissionError) as e:
+            # If we can't create the directory, use a local fallback
+            print(f"Warning: Could not create backup directory {v}: {e}")
+            fallback_path = Path("./backups")
+            fallback_path.mkdir(parents=True, exist_ok=True)
+            return str(fallback_path)
         return v
     
     def get_gmail_accounts(self) -> List[Dict]:
