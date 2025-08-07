@@ -5,8 +5,12 @@ modules = ["python-3.12"]
 channel = "stable-24.05"
 
 [deployment]
-run = ["sh", "-c", "python main.py"]
+run = ["sh", "-c", "python start.py"]
 
 [[ports]]
 localPort = 8080
 externalPort = 80
+
+[env]
+PYTHONPATH = "$REPL_HOME"
+PYTHONUNBUFFERED = "1"
