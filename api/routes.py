@@ -18,6 +18,7 @@ from config.settings import settings
 from core.metrics import generate_metrics, get_metrics_content_type, metrics_collector
 from core.middleware import validate_webhook_token
 from core.exceptions import AuthenticationError
+from core.rate_limiter import gemini_rate_limiter
 
 logger = structlog.get_logger()
 
@@ -585,4 +586,18 @@ async def get_circuit_breaker_status():
         return {"circuit_breakers": stats}
     except Exception as e:
         logger.error("Failed to get circuit breaker status", error=str(e), exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@router.get("/rate-limiter/status")
+async def get_rate_limiter_status():
+    """Get rate limiter status for Gemini API"""
+    try:
+        status = gemini_rate_limiter.get_status()
+        return {
+            "rate_limiter": {
+                "gemini_api": status
+            }
+        }
+    except Exception as e:
+        logger.error("Failed to get rate limiter status", error=str(e), exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error")

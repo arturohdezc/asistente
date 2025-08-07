@@ -10,6 +10,7 @@ from models.task import Priority
 from config.settings import settings
 from core.exceptions import GeminiServiceError, wrap_external_error
 from core.circuit_breaker import get_gemini_circuit_breaker
+from core.rate_limiter import gemini_rate_limiter
 
 logger = structlog.get_logger()
 
@@ -68,6 +69,19 @@ class GeminiService:
                 source=source,
                 text_length=len(text)
             )
+            
+            # Check rate limiter before making request
+            if not await gemini_rate_limiter.acquire(user_id=source):
+                logger.warning(
+                    "Rate limited - falling back to simple task creation",
+                    source=source
+                )
+                # Return empty result to trigger fallback
+                return AnalysisResult(
+                    tasks=[],
+                    context="Rate limited - created simple task",
+                    priority=Priority.NORMAL
+                )
             
             # Create analysis prompt
             prompt = self._create_analysis_prompt(text, source)
@@ -343,6 +357,20 @@ If no actionable tasks are found, return empty tasks array but still provide con
                 source=source,
                 text_length=len(text)
             )
+            
+            # Check rate limiter before making request
+            if not await gemini_rate_limiter.acquire(user_id=source):
+                logger.warning(
+                    "Rate limited - cannot analyze calendar event",
+                    source=source
+                )
+                # Return result with no datetime to trigger error message
+                return CalendarAnalysisResult(
+                    title="Event",
+                    event_datetime=None,
+                    duration_minutes=60,
+                    description="Rate limited - please try again later"
+                )
             
             # Create calendar analysis prompt
             prompt = self._create_calendar_analysis_prompt(text, source)
