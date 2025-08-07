@@ -1,162 +1,116 @@
-# 🚀 Replit Deployment Guide
+# 🚀 Replit Deployment - Guía Completa
 
-## Resumen de Cambios Realizados
+## ⚡ **Deployment Rápido (3 pasos)**
 
-### ✅ Problemas Solucionados
+### 1. **Import a Replit**
+- Ve a [Replit](https://replit.com) 
+- Crea nuevo Repl desde GitHub repository
+- El proyecto se auto-configura (NO necesita Nix)
 
-1. **Pydantic v2 Compatibility**: 
-   - Cambiado `BaseSettings` import a `pydantic-settings`
-   - Actualizado `@validator` a `@field_validator` con `@classmethod`
-   - Configurado `model_config` en lugar de `class Config`
-
-2. **Variable de Entorno Simplificada**:
-   - Cambiado `X_TELEGRAM_BOT_API_SECRET_TOKEN` a `TELEGRAM_WEBHOOK_SECRET`
-   - Evita problemas con caracteres especiales en nombres de variables
-
-3. **Dependencias Simplificadas**:
-   - Removido límites de versión estrictos que causaban conflictos
-   - Creado `requirements-replit-simple.txt` sin versiones específicas
-
-4. **Rutas Flexibles**:
-   - Configuración automática de fallback para directorios que no se pueden crear
-   - Soporte tanto para rutas de Replit (`/home/runner/`) como locales (`./`)
-
-## 📋 Pasos para Deployment en Replit
-
-### 1. Configurar Variables de Entorno en Replit Secrets
-
-Ve a tu Repl → Secrets (🔒) y agrega:
-
+### 2. **Configurar Secrets**
+En Replit Secrets (🔒), agrega:
 ```bash
-# Requeridas
-TELEGRAM_TOKEN=tu_token_real_aqui
-TELEGRAM_WEBHOOK_SECRET=tu_secret_webhook
-GEMINI_API_KEY=tu_api_key_gemini
-CRON_TOKEN=tu_token_cron_seguro
-
-# Opcionales (para funcionalidad completa)
-GMAIL_ACCOUNTS_JSON={"accounts": [{"email": "tu@gmail.com", "credentials": "..."}]}
-CALENDAR_CREDENTIALS_JSON={"type": "service_account", "project_id": "..."}
-
-# Configuración (opcional, usa defaults si no se especifica)
-DATABASE_URL=sqlite+aiosqlite:///home/runner/db.sqlite3
-BACKUP_DIRECTORY=/home/runner/backups
-DEBUG=false
+TELEGRAM_TOKEN=tu_bot_token_real
+TELEGRAM_WEBHOOK_SECRET=tu_webhook_secret
+GEMINI_API_KEY=tu_gemini_key_real
+CRON_TOKEN=tu_cron_token_seguro
 ```
 
-### 2. Ejecutar la Aplicación
+### 3. **Ejecutar**
+Presiona **Run** - ¡Listo! El `start.py` maneja todo automáticamente.
 
-En Replit, simplemente presiona el botón **Run** o ejecuta:
+---
 
-```bash
-python start.py
+## � P**Si hay problemas**
+
+### Error: "couldn't get nix env building"
+**Solución**: El proyecto ya NO usa Nix. Si ves este error:
+1. Verifica que NO existe archivo `replit.nix` 
+2. Tu `.replit` debe verse así:
+```toml
+run = "python start.py"
+modules = ["python-3.12"]
+
+[deployment]
+run = ["sh", "-c", "python start.py"]
+
+[[ports]]
+localPort = 8080
+externalPort = 80
+
+[env]
+PYTHONPATH = "$REPL_HOME"
+PYTHONUNBUFFERED = "1"
 ```
 
-El script automáticamente:
-- ✅ Instala dependencias faltantes
-- ✅ Verifica variables de entorno
-- ✅ Inicializa la base de datos SQLite
-- ✅ Inicia el servidor FastAPI en puerto 8080
+### Dependencias no se instalan
+El `start.py` instala automáticamente. Si falla:
+```bash
+# Instalar manualmente
+pip install fastapi uvicorn[standard] sqlalchemy[asyncio] aiosqlite pydantic pydantic-settings httpx python-dotenv structlog prometheus-client pytz --user
+```
 
-### 3. Verificar que Funciona
+### Variables de entorno faltantes
+Agrega en Replit Secrets (mínimo requerido):
+- `TELEGRAM_TOKEN`
+- `TELEGRAM_WEBHOOK_SECRET` 
+- `GEMINI_API_KEY`
+- `CRON_TOKEN`
+
+---
+
+## 🎯 **Configurar Webhooks**
+
+### Telegram Bot
+```bash
+curl -X POST "https://api.telegram.org/bot<TU_TOKEN>/setWebhook" \
+  -d "url=https://tu-repl.replit.dev/api/v1/telegram-webhook"
+```
+
+### Gmail/Calendar
+Usa el proxy en carpeta `proxy/` para manejar cold-starts.
+
+---
+
+## ✅ **Verificar que funciona**
 
 Una vez iniciado, deberías ver:
-
 ```
 🤖 Personal Assistant Bot - Replit Startup
 ==================================================
-📦 Installing dependencies...
 ✅ Dependencies installed successfully
 ✅ Environment variables configured
 🚀 Starting Personal Assistant Bot...
-✅ Database initialized
-✅ Background services started
 INFO: Uvicorn running on http://0.0.0.0:8080
 ```
 
-### 4. Configurar Webhooks
+### Endpoints disponibles:
+- `https://tu-repl.replit.dev/health` - Health check
+- `https://tu-repl.replit.dev/docs` - API documentation
+- `https://tu-repl.replit.dev/api/v1/metrics` - Métricas
 
-#### Telegram Bot Webhook
-```bash
-curl -X POST "https://api.telegram.org/bot<TU_TOKEN>/setWebhook" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "url": "https://tu-repl-name.tu-usuario.repl.co/api/v1/telegram-webhook",
-    "secret_token": "tu_webhook_secret"
-  }'
-```
+---
 
-#### Gmail & Calendar Webhooks
-Necesitas deployar el proxy (Cloud Function) que está en la carpeta `proxy/`:
-- El proxy maneja cold-starts de Replit
-- Reenvía webhooks de Gmail/Calendar a tu Repl
-- Ver `proxy/README.md` para instrucciones
+## 🤖 **Comandos del Bot**
 
-### 5. Probar Endpoints
-
-```bash
-# Health check
-curl https://tu-repl-name.tu-usuario.repl.co/health
-
-# API docs
-https://tu-repl-name.tu-usuario.repl.co/docs
-
-# Métricas
-https://tu-repl-name.tu-usuario.repl.co/api/v1/metrics
-```
-
-## 🔧 Troubleshooting
-
-### Error: "Import error: BaseSettings has been moved"
-✅ **Solucionado**: Actualizado a `pydantic-settings`
-
-### Error: "Field required telegram_webhook_secret"
-✅ **Solucionado**: Usar `TELEGRAM_WEBHOOK_SECRET` en lugar de `X_TELEGRAM_BOT_API_SECRET_TOKEN`
-
-### Error: "Operation not supported: /home/runner"
-✅ **Solucionado**: Fallback automático a rutas locales
-
-### Dependencias no se instalan
-- El script intenta `requirements-replit-simple.txt` primero
-- Si falla, intenta `requirements.txt`
-- Continúa aunque algunas dependencias fallen
-
-### Cold Start Issues
-- El proxy en `proxy/` maneja esto automáticamente
-- Implementa reintentos exponenciales
-- Detecta cuando Replit está "dormido"
-
-## 📊 Funcionalidades Disponibles
-
-Una vez deployado, tu bot tendrá:
-
-### ✅ Comandos de Telegram
+Una vez configurado el webhook de Telegram:
 - `/add <tarea>` - Agregar nueva tarea
 - `/list` - Listar tareas pendientes
-- `/done <id>` - Marcar tarea como completada
+- `/done <id>` - Marcar tarea completada
 - `/calendar <fecha> <evento>` - Crear evento en Calendar
 
-### ✅ Webhooks Automáticos
-- Gmail: Analiza emails y extrae tareas con IA
-- Calendar: Notifica reuniones y busca contexto
-- Telegram: Procesa comandos en tiempo real
+---
 
-### ✅ Servicios Background
-- Resumen diario automático (7:00 AM México)
-- Backup diario de base de datos
-- Renovación automática de Gmail watchers
+## 📊 **Funcionalidades**
 
-### ✅ API REST
-- `GET /api/v1/tasks` - Listar tareas con filtros
-- `PUT /api/v1/tasks/{id}` - Actualizar tarea
-- `GET /api/v1/daily-summary` - Resumen diario
-- `GET /api/v1/metrics` - Métricas Prometheus
+Tu bot tendrá:
+- ✅ **AI Task Extraction** - Análisis inteligente de emails con Gemini
+- ✅ **Multi-Account Gmail** - Monitoreo de múltiples cuentas
+- ✅ **Smart Calendar** - Integración con Google Calendar
+- ✅ **Telegram Interface** - Gestión completa via comandos
+- ✅ **Daily Summaries** - Resúmenes automáticos diarios
+- ✅ **Auto Backups** - Respaldos automáticos de base de datos
+- ✅ **REST API** - API completa con documentación
+- ✅ **Monitoring** - Métricas Prometheus integradas
 
-## 🎯 Próximos Pasos
-
-1. **Configurar Tokens Reales**: Reemplaza los tokens de prueba
-2. **Deployar Proxy**: Para webhooks de Gmail/Calendar
-3. **Configurar Cron**: Para resúmenes diarios cuando Repl esté dormido
-4. **Monitoreo**: Usar `/metrics` para observabilidad
-
-¡Tu asistente personal ya está listo para usar! 🎉
+¡Tu asistente personal está listo! 🎉

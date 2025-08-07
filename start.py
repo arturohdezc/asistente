@@ -12,41 +12,73 @@ def install_dependencies():
     """Install Python dependencies from requirements.txt"""
     print("📦 Installing dependencies...")
     
+    # First try requirements.txt
     try:
         subprocess.check_call([
             sys.executable, "-m", "pip", "install", 
             "-r", "requirements.txt",
-            "--user", "--upgrade", "--quiet"
+            "--user", "--upgrade", "--quiet", "--no-warn-script-location"
         ])
-        print("✅ Dependencies installed successfully")
+        print("✅ Dependencies installed successfully from requirements.txt")
         return True
     except subprocess.CalledProcessError as e:
         print(f"❌ Failed to install from requirements.txt: {e}")
         print("💡 Trying manual installation of core packages...")
         
-        # Try installing core packages individually
+        # Try installing core packages individually (without optional extras)
         core_packages = [
-            "fastapi", "uvicorn[standard]", "sqlalchemy[asyncio]", 
-            "aiosqlite", "pydantic", "pydantic-settings", "httpx",
-            "python-dotenv", "structlog", "prometheus-client", "pytz"
+            "fastapi", 
+            "uvicorn", 
+            "sqlalchemy", 
+            "aiosqlite", 
+            "pydantic", 
+            "pydantic-settings", 
+            "httpx",
+            "python-dotenv"
+        ]
+        
+        # Optional packages (nice to have but not critical)
+        optional_packages = [
+            "structlog", 
+            "prometheus-client", 
+            "pytz",
+            "python-telegram-bot",
+            "google-api-python-client",
+            "google-auth"
         ]
         
         success_count = 0
+        total_packages = len(core_packages) + len(optional_packages)
+        
+        # Install core packages first
         for package in core_packages:
             try:
                 subprocess.check_call([
                     sys.executable, "-m", "pip", "install", 
-                    package, "--user", "--quiet"
+                    package, "--user", "--quiet", "--no-warn-script-location"
                 ])
                 success_count += 1
+                print(f"   ✅ {package}")
             except subprocess.CalledProcessError:
-                continue
+                print(f"   ❌ {package}")
         
-        if success_count >= 6:  # At least core packages
-            print(f"✅ Installed {success_count}/{len(core_packages)} packages")
+        # Install optional packages
+        for package in optional_packages:
+            try:
+                subprocess.check_call([
+                    sys.executable, "-m", "pip", "install", 
+                    package, "--user", "--quiet", "--no-warn-script-location"
+                ])
+                success_count += 1
+                print(f"   ✅ {package}")
+            except subprocess.CalledProcessError:
+                print(f"   ⚠️  {package} (optional)")
+        
+        if success_count >= len(core_packages):  # All core packages installed
+            print(f"✅ Installed {success_count}/{total_packages} packages (all core packages ready)")
             return True
         else:
-            print(f"⚠️  Only installed {success_count}/{len(core_packages)} packages")
+            print(f"⚠️  Only installed {success_count}/{total_packages} packages")
     
     print("💡 Continuing with available packages...")
     return True  # Continue anyway
