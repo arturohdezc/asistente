@@ -68,28 +68,33 @@ graph TB
 ### Local Development
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/your-org/personal-assistant-bot.git
    cd personal-assistant-bot
    ```
 
 2. **Install dependencies**
+
    ```bash
    pip install -r requirements.txt
    ```
 
 3. **Set up environment variables**
+
    ```bash
    cp .env.example .env
    # Edit .env with your configuration
    ```
 
 4. **Run the application**
+
    ```bash
    python main.py
    ```
 
 5. **Run tests**
+
    ```bash
    python run_tests.py
    ```
@@ -159,6 +164,7 @@ Use a service account JSON key:
 
 2. **Configure Environment Variables**
    Add these to Replit Secrets (🔒):
+
    ```bash
    TELEGRAM_TOKEN=your_bot_token
    TELEGRAM_WEBHOOK_SECRET=your_webhook_secret  
@@ -178,6 +184,7 @@ Use a service account JSON key:
      - ✅ Starts FastAPI server on port 8080
 
 4. **Configure Webhooks**
+
    ```bash
    # Telegram Bot Webhook
    curl -X POST "https://api.telegram.org/bot<TOKEN>/setWebhook" \
@@ -186,7 +193,8 @@ Use a service account JSON key:
    # Gmail/Calendar: Use Cloud Function proxy (see below)
    ```
 
-**Troubleshooting**: 
+**Troubleshooting**:
+
 - 🚨 **Pip errors?** Normal in Replit - dependencies are provided by Nix
 - 📖 **Full Guide**: [REPLIT_DEPLOYMENT.md](REPLIT_DEPLOYMENT.md)
 
@@ -195,6 +203,7 @@ Use a service account JSON key:
 The proxy handles cold starts and provides reliable webhook processing:
 
 1. **Deploy Gmail Webhook Proxy**
+
    ```bash
    cd proxy/
    gcloud functions deploy gmail-webhook-proxy \
@@ -206,6 +215,7 @@ The proxy handles cold starts and provides reliable webhook processing:
    ```
 
 2. **Deploy Calendar Webhook Proxy**
+
    ```bash
    gcloud functions deploy calendar-webhook-proxy \
      --runtime python39 \
@@ -293,11 +303,13 @@ tests/
 ### Performance Testing with Locust
 
 1. **Install Locust**
+
    ```bash
    pip install locust
    ```
 
 2. **Create Load Test Script**
+
    ```python
    # locustfile.py
    from locust import HttpUser, task, between
@@ -319,6 +331,7 @@ tests/
    ```
 
 3. **Run Load Tests**
+
    ```bash
    # Local testing
    locust -f locustfile.py --host=http://localhost:8080
@@ -520,7 +533,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-- 📧 Email: support@example.com
+- 📧 Email: <support@example.com>
 - 💬 Telegram: @PersonalAssistantBot
 - 🐛 Issues: [GitHub Issues](https://github.com/your-org/personal-assistant-bot/issues)
 - 📖 Documentation: [Wiki](https://github.com/your-org/personal-assistant-bot/wiki)

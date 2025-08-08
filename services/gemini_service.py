@@ -48,9 +48,19 @@ class GeminiService:
     def __init__(self):
         self.api_key = settings.gemini_api_key
         self.base_url = "https://generativelanguage.googleapis.com/v1beta"
-        self.model = "gemini-1.5-flash"
+        self.model = settings.gemini_model  # Configurable model from environment
         self.max_retries = 3
         self.base_delay = 2  # Base delay for exponential backoff: 2s, 4s, 8s
+        
+        # Validate model is a Flash variant
+        valid_models = ["gemini-1.5-flash", "gemini-2.0-flash-exp", "gemini-2.0-flash-thinking-exp"]
+        if self.model not in valid_models:
+            logger.warning(
+                "Invalid Gemini model specified, falling back to gemini-1.5-flash",
+                specified_model=self.model,
+                valid_models=valid_models
+            )
+            self.model = "gemini-1.5-flash"
     
     async def analyze_text(self, text: str, source: str) -> AnalysisResult:
         """

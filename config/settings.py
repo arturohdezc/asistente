@@ -20,6 +20,7 @@ class Settings(BaseSettings):
     
     # Gemini AI Configuration
     gemini_api_key: str = Field(..., env="GEMINI_API_KEY")
+    gemini_model: str = Field(default="gemini-1.5-flash", env="GEMINI_MODEL")
     
     # Cron Configuration
     cron_token: str = Field(..., env="CRON_TOKEN")
